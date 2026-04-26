@@ -2,13 +2,11 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include "signals.h"
+#include "jobs.h"
 
 static void sigchld_handler(int sig) {
     (void)sig;
-    int status;
-    pid_t pid;
-    while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
-        printf("\n[done] %d\n", pid);
+    jobs_reap();
 }
 
 void signals_init(void) {

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "types.h"
 #include "lexer.h"
 #include "parser.h"
@@ -26,7 +27,7 @@ static void run_loop(FILE *input, int interactive) {
         if (line[0] == '\0')
             continue;
 
-        token_t    *tokens  = lexer_tokenize(line);
+        token_t    *tokens   = lexer_tokenize(line);
         pipeline_t *pipeline = parser_parse(tokens);
 
         if (pipeline)
@@ -41,7 +42,8 @@ int main(int argc, char *argv[]) {
     signals_init();
 
     if (argc == 1) {
-        run_loop(stdin, 1);
+        int interactive = isatty(STDIN_FILENO);
+        run_loop(stdin, interactive);
     } else {
         FILE *f = fopen(argv[1], "r");
         if (!f) {
