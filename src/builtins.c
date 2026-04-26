@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include "types.h"
 #include "builtins.h"
+#include "jobs.h"
 
 static int builtin_cd(char **argv) {
     char *dir = argv[1];
@@ -19,6 +20,7 @@ static int builtin_help(void) {
     printf("Built-in commands:\n");
     printf("  cd [dir]       Change directory (defaults to HOME)\n");
     printf("  help           Show this help message\n");
+    printf("  jobs           List background jobs\n");
     printf("  exit [code]    Exit the shell\n");
     printf("Operators:\n");
     printf("  cmd > file     Redirect output to file\n");
@@ -38,6 +40,11 @@ int builtins_exec(cmd_t *cmd) {
 
     if (strcmp(cmd->argv[0], "help") == 0)
         return builtin_help();
+
+    if (strcmp(cmd->argv[0], "jobs") == 0) {
+        jobs_list();
+        return 1;
+    }
 
     if (strcmp(cmd->argv[0], "exit") == 0) {
         int code = cmd->argv[1] ? atoi(cmd->argv[1]) : 0;

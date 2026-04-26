@@ -7,6 +7,7 @@
 #include "types.h"
 #include "executor.h"
 #include "builtins.h"
+#include "jobs.h"
 
 static void apply_redirection(cmd_t *cmd) {
     if (cmd->infile) {
@@ -30,19 +31,31 @@ static int count_cmds(pipeline_t *pipeline) {
     return n;
 }
 
+static char *build_cmdline(pipeline_t *pipeline) {
+    static char buf[MAX_LINE];
+    buf[0] = '\0';
+    for (cmd_t *c = pipeline->head; c; c = c->next) {
+        for (int i = 0; c->argv[i]; i++) {
+            strncat(buf, c->argv[i], MAX_LINE - strlen(buf) - 1);
+            strncat(buf, " ",       MAX_LINE - strlen(buf) - 1);
+        }
+        if (c->next)
+            strncat(buf, "| ", MAX_LINE - strlen(buf) - 1);
+    }
+    return buf;
+}
+
 void executor_run(pipeline_t *pipeline) {
     if (!pipeline || !pipeline->head || !pipeline->head->argv[0])
         return;
 
     int n = count_cmds(pipeline);
 
-    /* single command — check builtins before forking */
     if (n == 1) {
         if (builtins_exec(pipeline->head))
             return;
     }
 
-    /* build n-1 pipes */
     int pipes[n][2];
     for (int i = 0; i < n - 1; i++) {
         if (pipe(pipes[i]) < 0) { perror("pipe"); return; }
@@ -56,19 +69,14 @@ void executor_run(pipeline_t *pipeline) {
         if (pids[i] < 0) { perror("fork"); return; }
 
         if (pids[i] == 0) {
-            /* child: restore default signal behavior */
             signal(SIGINT,  SIG_DFL);
             signal(SIGTSTP, SIG_DFL);
 
-            /* wire up pipe input from previous command */
             if (i > 0)
                 dup2(pipes[i - 1][0], STDIN_FILENO);
-
-            /* wire up pipe output to next command */
             if (i < n - 1)
                 dup2(pipes[i][1], STDOUT_FILENO);
 
-            /* close all pipe ends in child */
             for (int j = 0; j < n - 1; j++) {
                 close(pipes[j][0]);
                 close(pipes[j][1]);
@@ -81,17 +89,15 @@ void executor_run(pipeline_t *pipeline) {
         }
     }
 
-    /* parent: close all pipe ends */
     for (int i = 0; i < n - 1; i++) {
         close(pipes[i][0]);
         close(pipes[i][1]);
     }
 
-    /* wait for all children unless background */
     if (!pipeline->background) {
         for (int i = 0; i < n; i++)
             waitpid(pids[i], NULL, 0);
     } else {
-        printf("[%d] background\n", pids[n - 1]);
+        jobs_add(pids[n - 1], build_cmdline(pipeline));
     }
 }
