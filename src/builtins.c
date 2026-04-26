@@ -1,7 +1,48 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include "types.h"
 #include "builtins.h"
 
+static int builtin_cd(char **argv) {
+    char *dir = argv[1];
+    if (!dir)
+        dir = getenv("HOME");
+    if (chdir(dir) != 0)
+        perror("cd");
+    return 1;
+}
+
+static int builtin_help(void) {
+    printf("MyShell — Simple Unix Shell\n");
+    printf("Built-in commands:\n");
+    printf("  cd [dir]       Change directory (defaults to HOME)\n");
+    printf("  help           Show this help message\n");
+    printf("  exit [code]    Exit the shell\n");
+    printf("Operators:\n");
+    printf("  cmd > file     Redirect output to file\n");
+    printf("  cmd >> file    Append output to file\n");
+    printf("  cmd < file     Redirect input from file\n");
+    printf("  cmd1 | cmd2    Pipe output of cmd1 to cmd2\n");
+    printf("  cmd &          Run command in background\n");
+    return 1;
+}
+
 int builtins_exec(cmd_t *cmd) {
-    (void)cmd;
+    if (!cmd->argv[0])
+        return 0;
+
+    if (strcmp(cmd->argv[0], "cd") == 0)
+        return builtin_cd(cmd->argv);
+
+    if (strcmp(cmd->argv[0], "help") == 0)
+        return builtin_help();
+
+    if (strcmp(cmd->argv[0], "exit") == 0) {
+        int code = cmd->argv[1] ? atoi(cmd->argv[1]) : 0;
+        exit(code);
+    }
+
     return 0;
 }
