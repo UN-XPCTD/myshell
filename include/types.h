@@ -1,6 +1,8 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include <sys/types.h>
+
 #define MAX_ARGS  128
 #define MAX_JOBS  64
 #define MAX_LINE  1024
