@@ -1,9 +1,20 @@
+/**
+ * @file jobs.c
+ * @brief Background job table for tracking and reaping background processes.
+ *
+ * Maintains a static array of job_t entries. Jobs are added when a
+ * background command is launched and removed when the process exits.
+ * jobs_reap() is called from the SIGCHLD handler to collect exit status
+ * without blocking.
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/wait.h>
 #include "types.h"
 #include "jobs.h"
 
+/** @brief Static job table shared across all job functions. */
 static job_t job_table[MAX_JOBS];
 
 void jobs_add(pid_t pid, const char *cmdline) {

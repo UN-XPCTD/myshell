@@ -1,3 +1,13 @@
+/**
+ * @file parser.c
+ * @brief Parser that converts a token list into a pipeline_t structure.
+ *
+ * Walks the token list produced by the lexer and builds a linked list
+ * of cmd_t nodes. Each pipe token starts a new cmd_t. Redirection
+ * tokens consume the following word as a filename. The background
+ * token sets the pipeline background flag.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,6 +15,10 @@
 #include "lexer.h"
 #include "parser.h"
 
+/**
+ * @brief Allocate and zero-initialize a new cmd_t.
+ * @return Pointer to the new command node.
+ */
 static cmd_t *make_cmd(void) {
     cmd_t *c = calloc(1, sizeof(cmd_t));
     return c;

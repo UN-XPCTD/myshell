@@ -1,3 +1,12 @@
+/**
+ * @file main.c
+ * @brief Shell entry point and main read-eval-print loop.
+ *
+ * Supports interactive mode (prompt displayed, reads from stdin) and
+ * batch mode (reads commands from a file without a prompt). Uses
+ * isatty() to detect whether stdin is a terminal.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,6 +20,11 @@
 
 #define PROMPT "mysh> "
 
+/**
+ * @brief Core read-eval-print loop.
+ * @param input       File to read commands from (stdin or batch file).
+ * @param interactive If non-zero, display the prompt before each command.
+ */
 static void run_loop(FILE *input, int interactive) {
     char line[MAX_LINE];
 
@@ -38,6 +52,16 @@ static void run_loop(FILE *input, int interactive) {
     }
 }
 
+/**
+ * @brief Shell entry point.
+ *
+ * With no arguments: runs interactively.
+ * With one argument: runs in batch mode reading from that file.
+ *
+ * @param argc Argument count.
+ * @param argv Argument vector.
+ * @return Exit status code.
+ */
 int main(int argc, char *argv[]) {
     signals_init();
 

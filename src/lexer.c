@@ -1,9 +1,24 @@
+/**
+ * @file lexer.c
+ * @brief Tokenizer for MyShell input lines.
+ *
+ * Scans a raw input string and produces a linked list of token_t nodes.
+ * Recognizes shell operators (|, &, <, >, >>) and treats everything
+ * else as a TOK_WORD token.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include "lexer.h"
 
+/**
+ * @brief Allocate and initialize a new token.
+ * @param type  Token type.
+ * @param value String value for TOK_WORD tokens, or NULL.
+ * @return Pointer to the new token.
+ */
 static token_t *make_token(token_type_t type, const char *value) {
     token_t *t = malloc(sizeof(token_t));
     t->type  = type;
