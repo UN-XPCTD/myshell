@@ -1,11 +1,11 @@
-/**
- * @file builtins.c
- * @brief Built-in command implementations for MyShell.
+/*
+ * FILE: builtins.c
  *
+ * Built in commands.
  * Built-ins are executed directly in the shell process without forking.
- * builtins_exec() returns 1 if it handled the command, 0 if the command
- * should be passed to the executor as an external program.
+ * builtins_exec() returns 1 if it handled the command, 0 if the command should be passed to the executor as an external program.
  */
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,14 +15,8 @@
 #include "builtins.h"
 #include "jobs.h"
 
-/**
- * @brief Change the current working directory.
- *
- * Uses chdir(2). Defaults to HOME if no argument is given.
- *
- * @param argv Argument vector where argv[1] is the target directory.
- * @return Always returns 1 (handled).
- */
+//changes current directory
+//**Uses chdir(2), Defaults to HOME if no argument is given.**
 static int builtin_cd(char **argv) {
     char *dir = argv[1];
     if (!dir)
@@ -32,10 +26,7 @@ static int builtin_cd(char **argv) {
     return 1;
 }
 
-/**
- * @brief Print a usage summary of available commands and operators.
- * @return Always returns 1 (handled).
- */
+//print a help menu
 static int builtin_help(void) {
     printf("MyShell — Simple Unix Shell\n");
     printf("Built-in commands:\n");
@@ -52,6 +43,7 @@ static int builtin_help(void) {
     return 1;
 }
 
+//executes the desired built-in command
 int builtins_exec(cmd_t *cmd) {
     if (!cmd->argv[0])
         return 0;

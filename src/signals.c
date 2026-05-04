@@ -1,8 +1,7 @@
-/**
- * @file signals.c
- * @brief Signal handler setup for MyShell.
+/*
+ * FILE: signals.c
  *
- * SIGINT and SIGTSTP are ignored in the shell process so that Ctrl+C
+ * PURPOSE: SIGINT and SIGTSTP are ignored in the shell process so that Ctrl+C
  * and Ctrl+Z only affect the foreground child. Each child resets these
  * to SIG_DFL after fork. SIGCHLD is handled to asynchronously reap
  * background children without creating zombie processes.
@@ -14,19 +13,15 @@
 #include "signals.h"
 #include "jobs.h"
 
-/**
- * @brief SIGCHLD handler — reaps finished background children.
- *
- * Delegates to jobs_reap() which uses WNOHANG so it never blocks.
- * Only background jobs tracked in the job table produce output.
- *
- * @param sig Signal number (unused).
- */
+
+//sigchld_handler reaps finished child processes using jobs_reap()
 static void sigchld_handler(int sig) {
     (void)sig;
     jobs_reap();
 }
 
+
+//initialize singals that are used later in the prorgam
 void signals_init(void) {
     struct sigaction sa_ign  = {0};
     struct sigaction sa_chld = {0};

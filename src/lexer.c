@@ -1,10 +1,9 @@
-/**
- * @file lexer.c
- * @brief Tokenizer for MyShell input lines.
+/*
+ * FILE: lexer.c
  *
+ * Purpose: This is the tokenizer for the shell.
  * Scans a raw input string and produces a linked list of token_t nodes.
- * Recognizes shell operators (|, &, <, >, >>) and treats everything
- * else as a TOK_WORD token.
+ * Recognizes shell operators (|, &, <, >, >>) and treats everything else as a TOK_WORD token.
  */
 
 #include <stdio.h>
@@ -13,12 +12,7 @@
 #include <ctype.h>
 #include "lexer.h"
 
-/**
- * @brief Allocate and initialize a new token.
- * @param type  Token type.
- * @param value String value for TOK_WORD tokens, or NULL.
- * @return Pointer to the new token.
- */
+//allocate and initialize a new token.
 static token_t *make_token(token_type_t type, const char *value) {
     token_t *t = malloc(sizeof(token_t));
     t->type  = type;
@@ -27,11 +21,13 @@ static token_t *make_token(token_type_t type, const char *value) {
     return t;
 }
 
+//check if toekns are special operators
 token_t *lexer_tokenize(const char *line) {
     token_t *head = NULL;
     token_t *tail = NULL;
     const char *p = line;
 
+    //move through line
     while (*p) {
         while (isspace((unsigned char)*p))
             p++;
@@ -39,6 +35,8 @@ token_t *lexer_tokenize(const char *line) {
 
         token_t *t = NULL;
 
+
+        //checks if its a special operator, else its put as a standard command/arg
         if (*p == '|') {
             t = make_token(TOK_PIPE, NULL);
             p++;
@@ -76,6 +74,7 @@ token_t *lexer_tokenize(const char *line) {
     return head;
 }
 
+//frees memory that was allocated.
 void lexer_free(token_t *tokens) {
     while (tokens) {
         token_t *next = tokens->next;

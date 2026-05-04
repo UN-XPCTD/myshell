@@ -1,12 +1,8 @@
-/**
- * @file executor.c
- * @brief Pipeline executor using fork, execvp, pipe, and dup2.
+/*
+ * FILE: executor.c
  *
- * Handles single commands (with built-in check), multi-stage pipelines,
- * input/output redirection, and background execution. For a pipeline of
- * N commands, N-1 pipes are created and N child processes are forked.
- * Each child inherits only the file descriptors it needs; all others are
- * closed to prevent deadlocks from lingering write ends.
+ * PURPOSE: This file handles the execution of commands including single commands, multistage pipelines, and
+ * input/output redirection and backgrounf processes.
  */
 
 #include <stdio.h>
@@ -20,14 +16,8 @@
 #include "builtins.h"
 #include "jobs.h"
 
-/**
- * @brief Apply input/output redirection for a command in a child process.
- *
- * Opens the specified files and rewires STDIN/STDOUT via dup2.
- * Calls exit(1) on failure so the child does not continue.
- *
- * @param cmd Command whose redirection fields to apply.
- */
+// applies in/out redirection for a command in child process
+//opens specific files
 static void apply_redirection(cmd_t *cmd) {
     if (cmd->infile) {
         int fd = open(cmd->infile, O_RDONLY);
@@ -44,49 +34,43 @@ static void apply_redirection(cmd_t *cmd) {
     }
 }
 
-/**
- * @brief Count the number of commands in a pipeline.
- * @param pipeline Pipeline to count.
- * @return Number of cmd_t nodes in the pipeline.
- */
+//counts how many commands are in a pipeline
 static int count_cmds(pipeline_t *pipeline) {
     int n = 0;
     for (cmd_t *c = pipeline->head; c; c = c->next) n++;
     return n;
 }
 
-/**
- * @brief Build a single command-line string from a pipeline for display.
- * @param pipeline Pipeline to stringify.
- * @return Pointer to a static buffer containing the command string.
- */
+//turns the pipeline ints a character string
 static char *build_cmdline(pipeline_t *pipeline) {
     static char buf[MAX_LINE];
     buf[0] = '\0';
-    for (cmd_t *c = pipeline->head; c; c = c->next) {
-        for (int i = 0; c->argv[i]; i++) {
-            strncat(buf, c->argv[i], MAX_LINE - strlen(buf) - 1);
+    for (cmd_t *cmd = pipeline->head; cmd; cmd = cmd->next) {
+        for (int i = 0; cmd->argv[i]; i++) {
+            strncat(buf, cmd->argv[i], MAX_LINE - strlen(buf) - 1);
             strncat(buf, " ",       MAX_LINE - strlen(buf) - 1);
         }
-        if (c->next)
+        if (cmd->next)
             strncat(buf, "| ", MAX_LINE - strlen(buf) - 1);
     }
     return buf;
 }
 
+//entry point of commands
+//forks child process for every command in the pipeline and sets up pipes for redirection
 void executor_run(pipeline_t *pipeline) {
     if (!pipeline || !pipeline->head || !pipeline->head->argv[0])
         return;
 
     int n = count_cmds(pipeline);
 
-    /* single command — check builtins before forking */
+    //single command, check builtins before forking
     if (n == 1) {
         if (builtins_exec(pipeline->head))
             return;
     }
 
-    /* allocate n-1 pipes */
+    // allocate n-1 pipes
     int pipes[n][2];
     for (int i = 0; i < n - 1; i++) {
         if (pipe(pipes[i]) < 0) { perror("pipe"); return; }
@@ -100,19 +84,19 @@ void executor_run(pipeline_t *pipeline) {
         if (pids[i] < 0) { perror("fork"); return; }
 
         if (pids[i] == 0) {
-            /* child: restore default signal behavior */
+            //child: restore default signal behavior
             signal(SIGINT,  SIG_DFL);
             signal(SIGTSTP, SIG_DFL);
 
-            /* connect pipe input from previous command */
+            // connect pipe input from previous command
             if (i > 0)
                 dup2(pipes[i - 1][0], STDIN_FILENO);
 
-            /* connect pipe output to next command */
+            //connect pipe output to next command
             if (i < n - 1)
                 dup2(pipes[i][1], STDOUT_FILENO);
 
-            /* close all pipe ends in child */
+            // close all pipe ends in child
             for (int j = 0; j < n - 1; j++) {
                 close(pipes[j][0]);
                 close(pipes[j][1]);
@@ -125,13 +109,13 @@ void executor_run(pipeline_t *pipeline) {
         }
     }
 
-    /* parent: close all pipe ends */
+    //parent: close all pipe ends
     for (int i = 0; i < n - 1; i++) {
         close(pipes[i][0]);
         close(pipes[i][1]);
     }
 
-    /* wait for all children unless background */
+    // wait for all children unless background
     if (!pipeline->background) {
         for (int i = 0; i < n; i++)
             waitpid(pids[i], NULL, 0);

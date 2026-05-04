@@ -1,6 +1,5 @@
-/**
- * @file jobs.c
- * @brief Background job table for tracking and reaping background processes.
+/*
+ * FILE: jobs.c
  *
  * Maintains a static array of job_t entries. Jobs are added when a
  * background command is launched and removed when the process exits.
@@ -14,11 +13,13 @@
 #include "types.h"
 #include "jobs.h"
 
-/** @brief Static job table shared across all job functions. */
+//Static job table shared across all job functions.
 static job_t job_table[MAX_JOBS];
 
+//add a new background job to the job table
 void jobs_add(pid_t pid, const char *cmdline) {
     for (int i = 0; i < MAX_JOBS; i++) {
+        //if job is not active, make it active and give pid
         if (!job_table[i].active) {
             job_table[i].active = 1;
             job_table[i].pid    = pid;
@@ -30,9 +31,12 @@ void jobs_add(pid_t pid, const char *cmdline) {
     fprintf(stderr, "mysh: job table full\n");
 }
 
+//clean up finished jobs
 void jobs_reap(void) {
     int status;
     pid_t pid;
+
+    //-1 mean wait for any child, WNOHANG returns 0 if none exit
     while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
         for (int i = 0; i < MAX_JOBS; i++) {
             if (job_table[i].active && job_table[i].pid == pid) {
@@ -43,6 +47,7 @@ void jobs_reap(void) {
     }
 }
 
+//print all active background jobs
 void jobs_list(void) {
     for (int i = 0; i < MAX_JOBS; i++) {
         if (job_table[i].active)

@@ -1,10 +1,9 @@
-/**
- * @file main.c
- * @brief Shell entry point and main read-eval-print loop.
+/*
+ * FILE: main.c
  *
  * Supports interactive mode (prompt displayed, reads from stdin) and
- * batch mode (reads commands from a file without a prompt). Uses
- * isatty() to detect whether stdin is a terminal.
+ * batch mode (reads commands from a file without a prompt).
+ * Uses isatty() to detect whether stdin is a terminal.
  */
 
 #include <stdio.h>
@@ -15,16 +14,13 @@
 #include "lexer.h"
 #include "parser.h"
 #include "executor.h"
-#include "builtins.h"
 #include "signals.h"
 
+//header of each line in shell
 #define PROMPT "mysh> "
 
-/**
- * @brief Core read-eval-print loop.
- * @param input       File to read commands from (stdin or batch file).
- * @param interactive If non-zero, display the prompt before each command.
- */
+//uses a constant loop to read and execute
+//recieves 1 for interactive, 0 for non
 static void run_loop(FILE *input, int interactive) {
     char line[MAX_LINE];
 
@@ -44,6 +40,7 @@ static void run_loop(FILE *input, int interactive) {
         token_t    *tokens   = lexer_tokenize(line);
         pipeline_t *pipeline = parser_parse(tokens);
 
+        //if pipeline == NULL then no tokens were found
         if (pipeline)
             executor_run(pipeline);
 
@@ -52,16 +49,8 @@ static void run_loop(FILE *input, int interactive) {
     }
 }
 
-/**
- * @brief Shell entry point.
- *
- * With no arguments: runs interactively.
- * With one argument: runs in batch mode reading from that file.
- *
- * @param argc Argument count.
- * @param argv Argument vector.
- * @return Exit status code.
- */
+//With no arguments: runs interactively.
+// With one argument: runs in batch mode reading from that file.
 int main(int argc, char *argv[]) {
     signals_init();
 
