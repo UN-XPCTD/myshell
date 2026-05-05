@@ -49,6 +49,7 @@ pipeline_t *parser_parse(token_t *tokens) {
             //input redirect
             case TOK_REDIR_IN:
                 if (current_token->next && current_token->next->type == TOK_WORD) {
+                    //next token is assumed to be infile
                     cmd->infile = strdup(current_token->next->value);
                     current_token = current_token->next;
                 }
@@ -57,6 +58,7 @@ pipeline_t *parser_parse(token_t *tokens) {
             //output redirect
             case TOK_REDIR_OUT:
                 if (current_token->next && current_token->next->type == TOK_WORD) {
+                    //next token is assumed to be outfile
                     cmd->outfile = strdup(current_token->next->value);
                     cmd->append  = 0;
                     current_token = current_token->next;
@@ -66,6 +68,7 @@ pipeline_t *parser_parse(token_t *tokens) {
             //append redirection
             case TOK_REDIR_APPEND:
                 if (current_token->next && current_token->next->type == TOK_WORD) {
+                    //next token is assumed to be outfile
                     cmd->outfile = strdup(current_token->next->value);
                     cmd->append  = 1;
                     current_token = current_token->next;
@@ -74,6 +77,7 @@ pipeline_t *parser_parse(token_t *tokens) {
 
             //pipe opperator
             case TOK_PIPE:
+                //make aditional cmd
                 cmd->next = make_cmd();
                 cmd       = cmd->next;
                 argc      = 0;

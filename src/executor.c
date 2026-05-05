@@ -36,9 +36,9 @@ static void apply_redirection(cmd_t *cmd) {
 
 //counts how many commands are in a pipeline
 static int count_cmds(pipeline_t *pipeline) {
-    int n = 0;
-    for (cmd_t *c = pipeline->head; c; c = c->next) n++;
-    return n;
+    int numOfCmds = 0;
+    for (cmd_t *c = pipeline->head; c; c = c->next) numOfCmds++;
+    return numOfCmds;
 }
 
 //turns the pipeline ints a character string
@@ -62,24 +62,24 @@ void executor_run(pipeline_t *pipeline) {
     if (!pipeline || !pipeline->head || !pipeline->head->argv[0])
         return;
 
-    int n = count_cmds(pipeline);
+    int numOfCmds = count_cmds(pipeline);
 
     //single command, check builtins before forking
-    if (n == 1) {
+    if (numOfCmds == 1) {
         if (builtins_exec(pipeline->head))
             return;
     }
 
     // allocate n-1 pipes
-    int pipes[n][2];
-    for (int i = 0; i < n - 1; i++) {
+    int pipes[numOfCmds][2];
+    for (int i = 0; i < numOfCmds - 1; i++) {
         if (pipe(pipes[i]) < 0) { perror("pipe"); return; }
     }
 
-    pid_t pids[n];
+    pid_t pids[numOfCmds];
     cmd_t *cmd = pipeline->head;
 
-    for (int i = 0; i < n; i++, cmd = cmd->next) {
+    for (int i = 0; i < numOfCmds; i++, cmd = cmd->next) {
         pids[i] = fork();
         if (pids[i] < 0) { perror("fork"); return; }
 
@@ -93,11 +93,11 @@ void executor_run(pipeline_t *pipeline) {
                 dup2(pipes[i - 1][0], STDIN_FILENO);
 
             //connect pipe output to next command
-            if (i < n - 1)
+            if (i < numOfCmds - 1)
                 dup2(pipes[i][1], STDOUT_FILENO);
 
             // close all pipe ends in child
-            for (int j = 0; j < n - 1; j++) {
+            for (int j = 0; j < numOfCmds - 1; j++) {
                 close(pipes[j][0]);
                 close(pipes[j][1]);
             }
@@ -110,16 +110,16 @@ void executor_run(pipeline_t *pipeline) {
     }
 
     //parent: close all pipe ends
-    for (int i = 0; i < n - 1; i++) {
+    for (int i = 0; i < numOfCmds - 1; i++) {
         close(pipes[i][0]);
         close(pipes[i][1]);
     }
 
     // wait for all children unless background
     if (!pipeline->background) {
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < numOfCmds; i++)
             waitpid(pids[i], NULL, 0);
     } else {
-        jobs_add(pids[n - 1], build_cmdline(pipeline));
+        jobs_add(pids[numOfCmds - 1], build_cmdline(pipeline));
     }
 }
