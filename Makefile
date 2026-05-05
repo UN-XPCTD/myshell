@@ -20,6 +20,11 @@ clean:
 
 #use this command if you get " $'\r': command not found" when running the tests, and youre on Linux/WSL
 # changes windows line ending \r\n to linux \n
-.PHONY: test_Fix
-test_Fix:
-	find . -name "*.sh" -exec sed -i 's/\r$//' {} +
+.PHONY: fix_posix
+fix_posix:
+	find . -name "*.sh" -exec sed -i 's/\r$$//' {} +
+
+# changes linux \n tp windows line ending \r\n
+.PHONY: fix_win
+fix_win:
+	find . -name "*.sh" -exec sed -i 's/$$/\r/' {} +
